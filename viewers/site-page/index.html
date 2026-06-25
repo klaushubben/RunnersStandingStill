@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Runners Standing Still</title>
+    <link rel="icon" href="../../favicon.ico" sizes="any" />
+    <meta name="description" content="Runners Standing Still by klaus, a self-hosted Ethereum generative art mint rehearsal." />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./runner-config.local.js"></script>
+    <script src="./mint.js?v=20260616-render-cache" defer></script>
+  </head>
+  <body>
+    <main class="runner-page">
+      <section class="hero" aria-labelledby="project-title">
+        <div>
+          <h1 id="project-title">Runners Standing Still</h1>
+          <p class="project-date">June 2026</p>
+        </div>
+      </section>
+
+      <section class="preview-flow" aria-label="Preview and mint">
+        <div class="preview-stage">
+          <div class="action-row preview-action">
+            <div class="preview-actions-left">
+              <button class="primary-button" type="button" data-random-preview>GENERATE</button>
+            </div>
+            <div class="preview-actions-right">
+              <span class="minted-count" data-minted-count>0 / 222 minted</span>
+              <button class="primary-button" type="button" data-wallet-toggle>CONNECT</button>
+              <button class="primary-button" type="button" data-mint-random disabled>MINT RANDOM</button>
+            </div>
+          </div>
+          <div class="preview-shell" data-preview-shell>
+            <iframe class="primary-preview" data-preview-frame title="Runners Standing Still preview" frameborder="0"></iframe>
+          </div>
+          <div class="preview-controls">
+            <section class="trait-panel" aria-label="Preview traits">
+              <div class="trait-panel-top">
+                <p class="trait-heading"><span>traits for</span> <span data-preview-hash>waiting</span></p>
+                <button class="quiet-button fullscreen-button" type="button" data-fullscreen-open>Full screen</button>
+              </div>
+              <div class="trait-groups">
+                <dl class="trait-list trait-column">
+                  <div>
+                    <dt>source</dt>
+                    <dd data-trait="Source Texture">pending</dd>
+                  </div>
+                  <div>
+                    <dt>palette</dt>
+                    <dd data-trait="Palette Mode">pending</dd>
+                  </div>
+                  <div>
+                    <dt>b/w temp</dt>
+                    <dd data-trait="B/W Temperature">pending</dd>
+                  </div>
+                  <div>
+                    <dt>decompose</dt>
+                    <dd data-trait="Decompose">pending</dd>
+                  </div>
+                </dl>
+                <dl class="trait-list trait-column">
+                  <div>
+                    <dt>dither</dt>
+                    <dd data-trait="Dither Pattern">pending</dd>
+                  </div>
+                  <div>
+                    <dt>levels</dt>
+                    <dd data-trait="Composite Levels">pending</dd>
+                  </div>
+                  <div>
+                    <dt>block size</dt>
+                    <dd data-trait="Decompose Block Size">pending</dd>
+                  </div>
+                </dl>
+                <dl class="trait-list trait-column live-trait-list" aria-label="Live chain state">
+                  <div>
+                    <dt>live source</dt>
+                    <dd data-live-source>pending</dd>
+                  </div>
+                  <div>
+                    <dt>block</dt>
+                    <dd data-live-block>pending</dd>
+                  </div>
+                  <div>
+                    <dt>epoch</dt>
+                    <dd data-live-epoch>pending</dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="mint-console">
+          <section class="project-description" aria-label="Project description">
+            <p>Perlin noise becomes the instrument: familiar, expressive, and endlessly playable. Small shifts in scale, drift, color, and decomposition pull the image into motion, while layered passes create rhythm, syncopation, and the feeling of a loop changing as it repeats. Generated entirely on-chain, each iteration is a self-contained visual phrase: fixed in code, but always moving.</p>
+            <p>After the deterministic image resolves, live block data is polled through public RPC endpoints and grouped into epochs, letting the surface continue to shift in time with the chain. If live data is unavailable, the token hash provides a deterministic fallback.</p>
+            <section class="text-note" aria-labelledby="display-notes-title">
+              <h2 id="display-notes-title">display notes</h2>
+              <p>Native size: 4032 x 2352, including a 3840 x 2160 image area and 96 px matte. Responsive to any window size.</p>
+            </section>
+            <section class="text-note" aria-labelledby="license-title">
+              <h2 id="license-title">license</h2>
+              <p><a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="license">CC BY-NC 4.0</a></p>
+            </section>
+            <dl class="technical-spec" aria-label="Technical spec">
+              <div>
+                <dt>renderer</dt>
+                <dd>Vanilla JavaScript and Canvas.</dd>
+              </div>
+              <div>
+                <dt>storage</dt>
+                <dd>On-chain script via Solady SSTORE2.</dd>
+              </div>
+              <div>
+                <dt>seed</dt>
+                <dd>On-chain hash per mint.</dd>
+              </div>
+              <div>
+                <dt>motion</dt>
+                <dd>Deterministic render, live epoch shifts.</dd>
+              </div>
+              <div>
+                <dt>TOKEN</dt>
+                <dd>ERC-721, Solady-based implementation.</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      </section>
+
+      <section class="minted-section" aria-label="Sample iterations">
+        <div class="section-row">
+          <p class="eyebrow section-label">Sample iterations</p>
+          <div class="filter-row" aria-label="Mint filters">
+            <button class="filter-button is-active" type="button" data-sort="recent">Most recent</button>
+            <button class="filter-button" type="button" data-sort="token">Token ID</button>
+            <button class="filter-button" type="button" data-sort="collector">Your mints</button>
+          </div>
+        </div>
+        <div class="minted-grid" data-minted-grid></div>
+      </section>
+    </main>
+    <div class="preview-overlay" data-preview-overlay hidden>
+      <button class="quiet-button fullscreen-close" type="button" data-fullscreen-close>close</button>
+    </div>
+  </body>
+</html>

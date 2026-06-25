@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Runners Standing Still Weight Lab</title>
+    <link rel="stylesheet" href="./weight-lab.css?v=20260616-likes" />
+    <script src="./weight-lab.js?v=20260616-likes" defer></script>
+  </head>
+  <body>
+    <main class="lab-page">
+      <header class="lab-header">
+        <h1>Runners Standing Still Weight Lab</h1>
+        <div class="lab-header-actions">
+          <button type="button" data-save>Save</button>
+          <span data-like-count>0 liked</span>
+          <a href="./index.html">Preview page</a>
+        </div>
+      </header>
+
+      <section class="lab-controls" aria-label="Matrix controls">
+        <label>
+          Hash
+          <span class="hash-control">
+            <input data-control="hash" value="0x748d85690bc6c7437dcebad87bf2013887e466ea19f4a7d4b21b89dd36e8e085" />
+            <button type="button" data-random-hash>Random</button>
+          </span>
+        </label>
+
+        <label>
+          Source
+          <select data-control="sourceTextureMode">
+            <option value="rich-stripes">Rich stripes</option>
+            <option value="gradient-4pt">4 point gradient</option>
+            <option value="grayscale">Grayscale</option>
+          </select>
+        </label>
+
+        <label>
+          Palette
+          <select data-control="paletteFamily">
+            <option value="diverging">Diverging</option>
+            <option value="split-complement">Split complement</option>
+          </select>
+        </label>
+
+        <label>
+          Dither
+          <select data-control="ditherPattern">
+            <option value="bayer-4">Bayer 4</option>
+            <option value="bayer-8">Bayer 8</option>
+            <option value="line">Line</option>
+          </select>
+        </label>
+
+        <label>
+          Block size
+          <select data-control="decomposeBlockSize">
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="32">32</option>
+          </select>
+        </label>
+
+        <label>
+          B/W temp
+          <select data-control="bwTemperature">
+            <option value="neutral">Neutral</option>
+            <option value="warm">Warm</option>
+            <option value="cool">Cool</option>
+          </select>
+        </label>
+
+        <label>
+          Alpha
+          <select data-control="alpha">
+            <option value="120">120</option>
+            <option value="135" selected>135</option>
+            <option value="150">150</option>
+            <option value="175">175</option>
+            <option value="200">200</option>
+          </select>
+        </label>
+
+        <label>
+          Background
+          <select data-control="backgroundMode">
+            <option value="">Weighted</option>
+            <option value="mono-black" selected>Black</option>
+            <option value="palette-dark">Palette dark</option>
+            <option value="palette-light">Palette light</option>
+          </select>
+        </label>
+
+        <button type="button" data-render>Render matrix</button>
+      </section>
+
+      <section class="weight-notes" aria-label="Current working weights">
+        <p>Current working weights</p>
+        <dl>
+          <div><dt>source</dt><dd>gradient-4pt 4 / rich stripes 3 / grayscale 1</dd></div>
+          <div><dt>decompose</dt><dd>byte mask dither levels 4 / byte mask dither 2 / ordered dither levels 2 / byte mask 1</dd></div>
+          <div><dt>color levels</dt><dd>2 levels 45 / 4 levels 45 / 8 levels 10</dd></div>
+          <div><dt>block size</dt><dd>16 weighted 5 / 8 weighted 3 / line mode can also use 32 weighted 1</dd></div>
+        </dl>
+      </section>
+
+      <section class="matrix-wrap" aria-label="Decompose by color levels matrix">
+        <div class="matrix-heading">
+          <p>Rows: decomposition mode</p>
+          <p>Columns: color levels</p>
+        </div>
+        <div class="matrix" data-matrix></div>
+      </section>
+    </main>
+  </body>
+</html>

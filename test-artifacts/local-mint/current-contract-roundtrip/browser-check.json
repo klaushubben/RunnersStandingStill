@@ -1,0 +1,127 @@
+{
+  "htmlPath": "/Users/nickhubben/Sandbox/GenArtContract/artifacts/runners-standing-still/local-mint/token-1.html",
+  "screenshotPath": "/Users/nickhubben/Sandbox/GenArtContract/artifacts/runners-standing-still/local-mint/token-1.png",
+  "screenshotBytes": 335716,
+  "completion": {
+    "event": true,
+    "detail": {
+      "projectName": "Runners Standing Still",
+      "tokenSymbol": "RUNNER",
+      "renderInput": {
+        "hash": "0x4323e40b2ac796eb845b97a9a2c8b842168344d475601ce102eb938a6d9b5807",
+        "tokenId": "1",
+        "contractAddress": "0xc6e7df5e7b4f2a278906862b61205850344d4e7d",
+        "chainId": "31337",
+        "minter": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+      },
+      "tokenData": {
+        "hash": "0x4323e40b2ac796eb845b97a9a2c8b842168344d475601ce102eb938a6d9b5807",
+        "tokenId": "1",
+        "contractAddress": "0xc6e7df5e7b4f2a278906862b61205850344d4e7d",
+        "chainId": "31337",
+        "minter": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+      },
+      "features": {
+        "Palette": "Diverging",
+        "Palette Mode": "diverging",
+        "Background Mode": "palette-dark",
+        "Scale": "canonical",
+        "Format": "4032x2352",
+        "Noise Type": "perlin",
+        "Gradient Direction": "vertical",
+        "Source Mode": "stripes",
+        "Palette Relationship": "None",
+        "Split Role": "None",
+        "Split Accent Direction": "Clockwise",
+        "Texture Corner Layout": "flip-y"
+      },
+      "settings": {
+        "paletteIndex": 0,
+        "paletteName": "Diverging",
+        "backgroundIndex": 2,
+        "paletteMode": "diverging",
+        "backgroundMode": "palette-dark",
+        "paletteBaseHue": 358.48495580255985,
+        "paletteAccentOffset": -7.259743136353791,
+        "paletteDivergeSpread": 169.10381976142526,
+        "backgroundHueOffset": 240,
+        "paletteRelationship": "soft-triadic",
+        "splitHueFamily": "any",
+        "splitAccentStrength": 1,
+        "splitAccentDirection": 1,
+        "splitAngle": 48.50532513298094,
+        "splitRole": "middle-flash",
+        "textureCornerLayout": "flip-y",
+        "scale": "canonical",
+        "width": 4032,
+        "height": 2352,
+        "imageWidth": 3840,
+        "imageHeight": 2160,
+        "matte": 96,
+        "matteColor": "#ffffff",
+        "textureWidth": 3840,
+        "textureHeight": 2160,
+        "noiseSeed": 960595634,
+        "noiseType": "perlin",
+        "noiseStepX": 0.000496351434555836,
+        "noiseStepY": 0.0018547481102636084,
+        "noiseZ": 10.674251463729888,
+        "harmonicAmount": 0.2866580588370562,
+        "harmonicScale": 3.4578143045073375,
+        "noiseBias": 0.5303251663967044,
+        "neutralNoiseBias": 0.5535183551241782,
+        "noiseBiasDelta": -0.02319318872747389,
+        "targetDrift": 0.15027263924479486,
+        "effectiveSlope": 0.1502726392447949,
+        "meltStrength": 6.479171148501337,
+        "tilt": 0.23123505351133644,
+        "verticalStretch": 0.34675458243582397,
+        "alpha": 77,
+        "noiseOctaves": 2,
+        "noiseFalloff": 0.05,
+        "columnStep": 2,
+        "sourceMode": "stripes",
+        "thinWhiteLines": false,
+        "showTextureMap": false,
+        "gradientDirection": "vertical",
+        "renderBatchSize": 8
+      },
+      "renderMs": 4167.400000000001
+    }
+  },
+  "canvasInfo": {
+    "title": "Runners Standing Still",
+    "canvas": {
+      "width": 4032,
+      "height": 2352,
+      "cssWidth": 1200,
+      "cssHeight": 700
+    },
+    "svg": null,
+    "body": {
+      "width": 1200,
+      "height": 900
+    },
+    "features": {
+      "Palette": "Diverging",
+      "Palette Mode": "diverging",
+      "Background Mode": "palette-dark",
+      "Scale": "canonical",
+      "Format": "4032x2352",
+      "Noise Type": "perlin",
+      "Gradient Direction": "vertical",
+      "Source Mode": "stripes",
+      "Palette Relationship": "None",
+      "Split Role": "None",
+      "Split Accent Direction": "Clockwise",
+      "Texture Corner Layout": "flip-y"
+    },
+    "renderInput": {
+      "hash": "0x4323e40b2ac796eb845b97a9a2c8b842168344d475601ce102eb938a6d9b5807",
+      "tokenId": "1",
+      "contractAddress": "0xc6e7df5e7b4f2a278906862b61205850344d4e7d",
+      "chainId": "31337",
+      "minter": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+    }
+  }
+}

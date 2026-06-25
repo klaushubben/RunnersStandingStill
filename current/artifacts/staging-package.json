@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-05-31T02:43:33.084Z",
+  "runnersDir": "/Users/nickhubben/Sandbox/TextureMelt/Apr5_staticmelt",
+  "files": {
+    "html": {
+      "path": "/Users/nickhubben/Sandbox/TextureMelt/Apr5_staticmelt/index.runners-standing-still.html",
+      "bytes": 3095,
+      "sha256": "0x8362a0fef263d3c63acb03126d8a576c47c7b171a6cfa31a6a3fb1171020889d"
+    },
+    "script": {
+      "path": "/Users/nickhubben/Sandbox/TextureMelt/Apr5_staticmelt/sketch.runners-standing-still.js",
+      "bytes": 37805,
+      "sha256": "0xebeab427394e8bb00be86c4c2d55d4dd3e67bc802fd4ffcea439aff4991644a4",
+      "simpleMinifiedBytes": 27804,
+      "simpleMinifiedSha256": "0x65da19f28f0eb91c73488bca764e37f4d1ae81eca2f97d46609f6c812ee8315b",
+      "terserMinifiedBytes": 21293,
+      "terserMinifiedSha256": "0x0a2ed52eb5291ac96f3af74d72e3e8e123c59b31088c1b5bd7527db6b3968c75"
+    },
+    "combinedHtml": {
+      "bytes": 40861,
+      "base64DataUriBytes": 54506,
+      "sha256": "0xf2c9dbffef23e6f0418c4451c75e3735d2bf8753ea76192b974acefe695d2245",
+      "simpleMinifiedBytes": 30860,
+      "simpleMinifiedBase64DataUriBytes": 41170,
+      "simpleMinifiedSha256": "0x92af3bd1d332c9e72221b1ccff9b84c95047560050f026ddbd4b744dd163d2dd",
+      "terserMinifiedBytes": 24349,
+      "terserMinifiedBase64DataUriBytes": 32490,
+      "terserMinifiedSha256": "0x97e903424970fca627870ed16c9643d1f44facc949683ba22991a82e1f103ba4"
+    }
+  },
+  "checks": [
+    {
+      "name": "staging HTML exists",
+      "pass": true,
+      "detail": "/Users/nickhubben/Sandbox/TextureMelt/Apr5_staticmelt/index.runners-standing-still.html"
+    },
+    {
+      "name": "staging script exists",
+      "pass": true,
+      "detail": "/Users/nickhubben/Sandbox/TextureMelt/Apr5_staticmelt/sketch.runners-standing-still.js"
+    },
+    {
+      "name": "HTML defines window.renderInput",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "HTML aliases tokenData for compatibility",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "HTML references active renderer script",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script reads renderInput.hash",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script assigns globalThis.$features",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no Math.random",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no Date.now",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no crypto randomness",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no network fetch",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no browser storage",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script has no external imports",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script uses requestAnimationFrame for progressive render",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script does not call toDataURL/download",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "script emits canonical completion event",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

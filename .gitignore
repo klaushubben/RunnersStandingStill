@@ -1,0 +1,17 @@
+.DS_Store
+
+# Dependencies / local tooling
+node_modules/
+.env
+.env.*
+
+# Browser / render scratch output
+.chrome-profile/
+*.log
+
+# Keep curated test artifacts, but avoid accidentally committing large render sweeps.
+archive/render-batches/*
+!archive/render-batches/README.md
+renders-*/
+render-output/
+

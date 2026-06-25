@@ -1,0 +1,13 @@
+{
+  "rpcUrl": "http://127.0.0.1:8545",
+  "tokenAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "rendererAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "tokenId": "1",
+  "seed": "0xce4ade814dd15c0698e94d0088c73bbe5f1accb2e03cb4b87c3d48fdff8b90e3",
+  "maxSupply": "100",
+  "mintPriceWei": "10000000000000000",
+  "name": "Runners Standing Still #1",
+  "imageBytes": 595,
+  "animationHtmlBytes": 22034,
+  "transactionHash": "0xb5d563b074c0d3dad452df9cd322e294aca6371fb3cacffd33a5e8cdcf75b007"
+}

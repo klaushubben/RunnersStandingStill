@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-06-24T02:31:55.166Z",
+  "mode": "static-feedback",
+  "totalSupply": 12,
+  "thumbnails": [
+    {
+      "tokenId": "1",
+      "name": "Sample #1",
+      "image": "./thumbs/0001.png",
+      "hash": "0x748d85690bc6c7437dcebad87bf2013887e466ea19f4a7d4b21b89dd36e8e085"
+    },
+    {
+      "tokenId": "2",
+      "name": "Sample #2",
+      "image": "./thumbs/0002.png",
+      "hash": "0x99884b4c977343ec37435162a1c90daa61f3b991f3c0dc18d745a5521916ade6"
+    },
+    {
+      "tokenId": "3",
+      "name": "Sample #3",
+      "image": "./thumbs/0003.png",
+      "hash": "0x9b4a4e83fc1f1105262e406695531ba3dc1feff278f1a39c54008fd2c1fbf616"
+    },
+    {
+      "tokenId": "4",
+      "name": "Sample #4",
+      "image": "./thumbs/0004.png",
+      "hash": "0x9393c845ea771865467581d012f042204d91f66a8afa23c3d2f964e7833f3ba7"
+    },
+    {
+      "tokenId": "5",
+      "name": "Sample #5",
+      "image": "./thumbs/0005.png",
+      "hash": "0x7b4a32222d3a1a136551bfdface8c24c3e56086afa1e798dfeb812f65ca8ab29"
+    },
+    {
+      "tokenId": "6",
+      "name": "Sample #6",
+      "image": "./thumbs/0006.png",
+      "hash": "0x0cb90a5d4a852942f2efdcf332143fe93566862bc5be020a8801ce3e5e86f12c"
+    },
+    {
+      "tokenId": "7",
+      "name": "Sample #7",
+      "image": "./thumbs/0007.png",
+      "hash": "0x389bcf59f2d7897802fb3046613dedc65e644269b51c1dab2cdef158f63b6a1d"
+    },
+    {
+      "tokenId": "8",
+      "name": "Sample #8",
+      "image": "./thumbs/0008.png",
+      "hash": "0xf05072cc6c317e7200ccc5048e041c4da4d640fbcc49a81b66f87e708e6f1ad4"
+    },
+    {
+      "tokenId": "9",
+      "name": "Sample #9",
+      "image": "./thumbs/0009.png",
+      "hash": "0x78a4043db4cfae8bfe84922cfe9a9ae826e897faf9929fc66c392b0c28448940"
+    },
+    {
+      "tokenId": "10",
+      "name": "Sample #10",
+      "image": "./thumbs/0010.png",
+      "hash": "0x150b94e725e5baa85bc99e1f2bbac7ac6b81b828fdc4e8039354b1eba7e8cce2"
+    },
+    {
+      "tokenId": "11",
+      "name": "Sample #11",
+      "image": "./thumbs/0011.png",
+      "hash": "0x9faec2c7953ac4600b0d1e64b9f1b464ce52b2d4f6bfa8f894143cb548ee1f7e"
+    },
+    {
+      "tokenId": "12",
+      "name": "Sample #12",
+      "image": "./thumbs/0012.png",
+      "hash": "0xcf621f4d5638914df21b5b407fdf8ab04f2e6f16fafd886acdaceaeffe7b2694"
+    }
+  ]
+}

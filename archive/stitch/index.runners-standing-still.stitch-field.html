@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Runners Standing Still RUN Word Field Preview</title>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const hash = params.get("hash");
+
+        window.renderInput = {
+            tokenId: params.get("tokenId") || "0",
+            hash: /^0x[0-9a-fA-F]{64}$/.test(hash || "")
+                ? hash
+                : "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            contractAddress: params.get("contractAddress") || "",
+            chainId: params.get("chainId") || "",
+            minter: params.get("minter") || "",
+        };
+        window.tokenData = window.renderInput;
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: #f5f5f2;
+        }
+
+        body {
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        .tools {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 2;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            background: rgba(245, 245, 242, 0.82);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .hash-control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: flex-start;
+        }
+
+        label {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            width: 140px;
+        }
+
+        button {
+            appearance: none;
+            border: 1px solid rgba(0, 0, 0, 0.32);
+            background: #ffffff;
+            color: #111111;
+            padding: 6px 9px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .hash {
+            max-width: 360px;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            white-space: normal;
+            opacity: 0.72;
+        }
+    </style>
+</head>
+<body>
+    <div class="tools">
+        <div class="hash-control">
+            <button type="button" id="randomHash">Random Hash</button>
+            <span class="hash" id="hashLabel"></span>
+        </div>
+        <label>
+            Word angle
+            <input type="range" id="stitchAngleOffset" min="-180" max="180" step="1">
+            <span id="stitchAngleOffsetLabel">0deg</span>
+        </label>
+        <label>
+            Word size
+            <input type="range" id="stitchLengthScale" min="0.25" max="40" step="0.25">
+            <span id="stitchLengthScaleLabel">1.00x</span>
+        </label>
+        <label>
+            Row step
+            <input type="range" id="stitchRowStep" min="1" max="40" step="1">
+            <span id="stitchRowStepLabel">6px</span>
+        </label>
+        <label>
+            Col step
+            <input type="range" id="stitchColumnStep" min="1" max="40" step="1">
+            <span id="stitchColumnStepLabel">6px</span>
+        </label>
+        <label>
+            Letter space
+            <input type="range" id="runLetterSpacing" min="-0.35" max="1.2" step="0.01">
+            <span id="runLetterSpacingLabel">0.04</span>
+        </label>
+        <label>
+            <input type="checkbox" id="monochromeWords">
+            Mono
+        </label>
+        <span id="liveBlockLabel">live block pending</span>
+    </div>
+    <canvas></canvas>
+    <script>
+        const hashLabel = document.getElementById("hashLabel");
+        const randomHashButton = document.getElementById("randomHash");
+        const stitchAngleOffset = document.getElementById("stitchAngleOffset");
+        const stitchAngleOffsetLabel = document.getElementById("stitchAngleOffsetLabel");
+        const stitchLengthScale = document.getElementById("stitchLengthScale");
+        const stitchLengthScaleLabel = document.getElementById("stitchLengthScaleLabel");
+        const stitchRowStep = document.getElementById("stitchRowStep");
+        const stitchRowStepLabel = document.getElementById("stitchRowStepLabel");
+        const stitchColumnStep = document.getElementById("stitchColumnStep");
+        const stitchColumnStepLabel = document.getElementById("stitchColumnStepLabel");
+        const runLetterSpacing = document.getElementById("runLetterSpacing");
+        const runLetterSpacingLabel = document.getElementById("runLetterSpacingLabel");
+        const monochromeWords = document.getElementById("monochromeWords");
+        const liveBlockLabel = document.getElementById("liveBlockLabel");
+        const initialAngleOffset = Number(params.get("stitchAngleOffset") || 0);
+        const initialLengthScale = Number(params.get("stitchLengthScale") || 1);
+        const initialRowStep = Number(params.get("stitchRowStep") || 6);
+        const initialColumnStep = Number(params.get("stitchColumnStep") || 6);
+        const initialLetterSpacing = Number(params.get("runLetterSpacing") || 0.04);
+        const initialMonochrome = params.get("monochrome") === "1" || params.get("monochrome") === "true";
+
+        hashLabel.textContent = window.renderInput.hash;
+        stitchAngleOffset.value = Number.isFinite(initialAngleOffset) ? initialAngleOffset : 0;
+        stitchAngleOffsetLabel.textContent = `${stitchAngleOffset.value}deg`;
+        stitchLengthScale.value = Number.isFinite(initialLengthScale) ? initialLengthScale : 1;
+        stitchLengthScaleLabel.textContent = `${Number(stitchLengthScale.value).toFixed(2)}x`;
+        stitchRowStep.value = Number.isFinite(initialRowStep) ? initialRowStep : 6;
+        stitchRowStepLabel.textContent = `${stitchRowStep.value}px`;
+        stitchColumnStep.value = Number.isFinite(initialColumnStep) ? initialColumnStep : 6;
+        stitchColumnStepLabel.textContent = `${stitchColumnStep.value}px`;
+        runLetterSpacing.value = Number.isFinite(initialLetterSpacing) ? initialLetterSpacing : 0.04;
+        runLetterSpacingLabel.textContent = Number(runLetterSpacing.value).toFixed(2);
+        monochromeWords.checked = initialMonochrome;
+
+        function randomHash() {
+            const bytes = new Uint8Array(32);
+            crypto.getRandomValues(bytes);
+
+            return "0x" + Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        randomHashButton.addEventListener("click", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("hash", randomHash());
+            next.searchParams.set("tokenId", Date.now().toString());
+            window.location.href = next.toString();
+        });
+
+        stitchAngleOffset.addEventListener("input", () => {
+            stitchAngleOffsetLabel.textContent = `${stitchAngleOffset.value}deg`;
+        });
+
+        stitchAngleOffset.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("stitchAngleOffset", stitchAngleOffset.value);
+            window.location.href = next.toString();
+        });
+
+        stitchLengthScale.addEventListener("input", () => {
+            stitchLengthScaleLabel.textContent = `${Number(stitchLengthScale.value).toFixed(2)}x`;
+        });
+
+        stitchLengthScale.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("stitchLengthScale", stitchLengthScale.value);
+            window.location.href = next.toString();
+        });
+
+        stitchRowStep.addEventListener("input", () => {
+            stitchRowStepLabel.textContent = `${stitchRowStep.value}px`;
+        });
+
+        stitchRowStep.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("stitchRowStep", stitchRowStep.value);
+            window.location.href = next.toString();
+        });
+
+        stitchColumnStep.addEventListener("input", () => {
+            stitchColumnStepLabel.textContent = `${stitchColumnStep.value}px`;
+        });
+
+        stitchColumnStep.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("stitchColumnStep", stitchColumnStep.value);
+            window.location.href = next.toString();
+        });
+
+        runLetterSpacing.addEventListener("input", () => {
+            runLetterSpacingLabel.textContent = Number(runLetterSpacing.value).toFixed(2);
+        });
+
+        runLetterSpacing.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("runLetterSpacing", runLetterSpacing.value);
+            window.location.href = next.toString();
+        });
+
+        monochromeWords.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            if (monochromeWords.checked) {
+                next.searchParams.set("monochrome", "1");
+            } else {
+                next.searchParams.delete("monochrome");
+            }
+
+            window.location.href = next.toString();
+        });
+
+        window.addEventListener("runners-standing-still:live-block", (event) => {
+            const live = event.detail.liveState;
+
+            liveBlockLabel.textContent = live.available
+                ? `block ${live.blockNumber} / epoch ${live.epoch}`
+                : "live block pending";
+        });
+    </script>
+    <script src="./sketch.runners-standing-still.stitch-field.js"></script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Runners Standing Still Live Noise Preview</title>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const hash = params.get("hash");
+
+        window.renderInput = {
+            tokenId: params.get("tokenId") || "0",
+            hash: /^0x[0-9a-fA-F]{64}$/.test(hash || "")
+                ? hash
+                : "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            contractAddress: params.get("contractAddress") || "",
+            chainId: params.get("chainId") || "",
+            minter: params.get("minter") || "",
+        };
+        window.tokenData = window.renderInput;
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: #f5f5f2;
+        }
+
+        body {
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        .tools {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+            width: 248px;
+            max-height: calc(100vh - 32px);
+            box-sizing: border-box;
+            overflow: auto;
+            padding: 12px;
+            background: rgba(245, 245, 242, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+            font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        button {
+            appearance: none;
+            border: 1px solid rgba(0, 0, 0, 0.32);
+            background: #ffffff;
+            color: #111111;
+            padding: 6px 9px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button,
+        select {
+            min-height: 30px;
+        }
+
+        select {
+            border: 1px solid rgba(0, 0, 0, 0.32);
+            background: #ffffff;
+            color: #111111;
+            padding: 5px 8px;
+            font: inherit;
+        }
+
+        label {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        label:has(input[type="checkbox"]) {
+            grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        label:has(select) {
+            grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            min-width: 0;
+        }
+
+        input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .hash {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="tools">
+        <button type="button" id="randomHash">Random Hash</button>
+        <label>
+            Source
+            <select id="sourceTextureMode">
+                <option value="palette-4pt">palette 4pt</option>
+                <option value="bw-field">B/W field</option>
+                <option value="bw-stripes">B/W stripes</option>
+                <option value="bw-stripes-gradient-slice">B/W + gradient slice</option>
+            </select>
+        </label>
+        <label>
+            <input type="checkbox" id="blackBackground">
+            Black bg
+        </label>
+        <label>
+            B/W temp
+            <select id="bwTemperature">
+                <option value="neutral">neutral</option>
+                <option value="warm">warm</option>
+                <option value="cool">cool</option>
+            </select>
+        </label>
+        <label>
+            Stripe size
+            <input type="range" id="stripeSize" min="0.1" max="4" step="0.05">
+            <span id="stripeSizeLabel">1.00x</span>
+        </label>
+        <label>
+            Alpha
+            <input type="range" id="alphaControl" min="0" max="255" step="1">
+            <span id="alphaLabel">120</span>
+        </label>
+        <label>
+            Decompose
+            <select id="decomposeMode">
+                <option value="off">off</option>
+                <option value="byte-mask">epoch byte mask</option>
+                <option value="byte-mask-dither">byte mask + dither</option>
+                <option value="byte-mask-dither-levels">byte mask + dither levels</option>
+                <option value="ordered-dither">ordered dither</option>
+                <option value="ordered-dither-levels">ordered dither levels</option>
+            </select>
+        </label>
+        <label>
+            Levels
+            <select id="compositeLevels">
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+                <option value="16">16</option>
+                <option value="24">24</option>
+                <option value="32">32</option>
+                <option value="64">64</option>
+            </select>
+        </label>
+        <label>
+            Pattern
+            <select id="ditherPattern">
+                <option value="bayer-4">bayer 4</option>
+                <option value="bayer-8">bayer 8</option>
+                <option value="line">line</option>
+            </select>
+        </label>
+        <label>
+            Block
+            <select id="decomposeBlockSize">
+                <option value="8">8px</option>
+                <option value="16">16px</option>
+            </select>
+        </label>
+        <span id="liveBlockLabel">live block pending</span>
+        <span class="hash" id="hashLabel"></span>
+    </div>
+    <canvas></canvas>
+    <script>
+        const hashLabel = document.getElementById("hashLabel");
+        const randomHashButton = document.getElementById("randomHash");
+        const liveBlockLabel = document.getElementById("liveBlockLabel");
+        const sourceTextureMode = document.getElementById("sourceTextureMode");
+        const allowedSourceTextureModes = ["palette-4pt", "bw-field", "bw-stripes", "bw-stripes-gradient-slice"];
+        const initialSourceTextureMode = allowedSourceTextureModes.includes(params.get("sourceTextureMode"))
+            ? params.get("sourceTextureMode")
+            : "bw-stripes-gradient-slice";
+        const blackBackground = document.getElementById("blackBackground");
+        const initialBlackBackground = params.get("blackBackground") === null
+            ? true
+            : params.get("blackBackground") === "1" || params.get("blackBackground") === "true";
+        const bwTemperature = document.getElementById("bwTemperature");
+        const allowedBwTemperatures = ["neutral", "warm", "cool"];
+        const initialBwTemperature = allowedBwTemperatures.includes(params.get("bwTemperature"))
+            ? params.get("bwTemperature")
+            : "neutral";
+        const stripeSize = document.getElementById("stripeSize");
+        const stripeSizeLabel = document.getElementById("stripeSizeLabel");
+        const initialStripeSize = Number(params.get("stripeSize") || 1);
+        const alphaControl = document.getElementById("alphaControl");
+        const alphaLabel = document.getElementById("alphaLabel");
+        const initialAlpha = Number(params.get("alpha") || 120);
+        const decomposeMode = document.getElementById("decomposeMode");
+        const allowedDecomposeModes = ["off", "byte-mask", "byte-mask-dither", "byte-mask-dither-levels", "ordered-dither", "ordered-dither-levels"];
+        const initialDecomposeMode = allowedDecomposeModes.includes(params.get("decomposeMode"))
+            ? params.get("decomposeMode")
+            : "off";
+        const compositeLevels = document.getElementById("compositeLevels");
+        const allowedCompositeLevels = ["2", "4", "8", "16", "24", "32", "64"];
+        const initialCompositeLevels = allowedCompositeLevels.includes(params.get("compositeLevels"))
+            ? params.get("compositeLevels")
+            : "16";
+        const ditherPattern = document.getElementById("ditherPattern");
+        const allowedDitherPatterns = ["bayer-4", "bayer-8", "line"];
+        const initialDitherPattern = allowedDitherPatterns.includes(params.get("ditherPattern"))
+            ? params.get("ditherPattern")
+            : "bayer-4";
+        const decomposeBlockSize = document.getElementById("decomposeBlockSize");
+        const initialDecomposeBlockSize = params.get("decomposeBlockSize") || "16";
+
+        function allowedBlocksForPattern(pattern) {
+            return pattern === "line" ? ["8", "16", "32"] : ["8", "16"];
+        }
+
+        function setBlockOptions(pattern, selectedValue) {
+            const allowedValues = allowedBlocksForPattern(pattern);
+            const nextValue = allowedValues.includes(selectedValue) ? selectedValue : "16";
+
+            decomposeBlockSize.replaceChildren(...allowedValues.map((value) => {
+                const option = document.createElement("option");
+
+                option.value = value;
+                option.textContent = `${value}px`;
+
+                return option;
+            }));
+            decomposeBlockSize.value = nextValue;
+        }
+
+        hashLabel.textContent = window.renderInput.hash;
+        sourceTextureMode.value = initialSourceTextureMode;
+        blackBackground.checked = initialBlackBackground;
+        bwTemperature.value = initialBwTemperature;
+        stripeSize.value = Number.isFinite(initialStripeSize) ? initialStripeSize : 1;
+        stripeSizeLabel.textContent = `${Number(stripeSize.value).toFixed(2)}x`;
+        alphaControl.value = Number.isFinite(initialAlpha) ? initialAlpha : 120;
+        alphaLabel.textContent = alphaControl.value;
+        decomposeMode.value = initialDecomposeMode;
+        compositeLevels.value = initialCompositeLevels;
+        ditherPattern.value = initialDitherPattern;
+        setBlockOptions(ditherPattern.value, initialDecomposeBlockSize);
+
+        function randomHash() {
+            const bytes = new Uint8Array(32);
+            crypto.getRandomValues(bytes);
+
+            return "0x" + Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        randomHashButton.addEventListener("click", () => {
+            const next = new URL(window.location.href);
+            next.searchParams.set("hash", randomHash());
+            next.searchParams.set("tokenId", Date.now().toString());
+            window.location.href = next.toString();
+        });
+
+        sourceTextureMode.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("sourceTextureMode", sourceTextureMode.value);
+            window.location.href = next.toString();
+        });
+
+        blackBackground.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            if (blackBackground.checked) {
+                next.searchParams.set("blackBackground", "1");
+            } else {
+                next.searchParams.set("blackBackground", "0");
+            }
+
+            window.location.href = next.toString();
+        });
+
+        bwTemperature.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("bwTemperature", bwTemperature.value);
+            window.location.href = next.toString();
+        });
+
+        stripeSize.addEventListener("input", () => {
+            stripeSizeLabel.textContent = `${Number(stripeSize.value).toFixed(2)}x`;
+        });
+
+        stripeSize.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("stripeSize", stripeSize.value);
+            window.location.href = next.toString();
+        });
+
+        alphaControl.addEventListener("input", () => {
+            alphaLabel.textContent = alphaControl.value;
+        });
+
+        alphaControl.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("alpha", alphaControl.value);
+            window.location.href = next.toString();
+        });
+
+        decomposeMode.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("decomposeMode", decomposeMode.value);
+            next.searchParams.set("compositeLevels", compositeLevels.value);
+            next.searchParams.set("ditherPattern", ditherPattern.value);
+            next.searchParams.set("decomposeBlockSize", decomposeBlockSize.value);
+            window.location.href = next.toString();
+        });
+
+        compositeLevels.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("compositeLevels", compositeLevels.value);
+            next.searchParams.set("decomposeMode", decomposeMode.value);
+            next.searchParams.set("ditherPattern", ditherPattern.value);
+            next.searchParams.set("decomposeBlockSize", decomposeBlockSize.value);
+            window.location.href = next.toString();
+        });
+
+        ditherPattern.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            setBlockOptions(ditherPattern.value, decomposeBlockSize.value);
+            next.searchParams.set("ditherPattern", ditherPattern.value);
+            next.searchParams.set("decomposeMode", decomposeMode.value);
+            next.searchParams.set("compositeLevels", compositeLevels.value);
+            next.searchParams.set("decomposeBlockSize", decomposeBlockSize.value);
+            window.location.href = next.toString();
+        });
+
+        decomposeBlockSize.addEventListener("change", () => {
+            const next = new URL(window.location.href);
+
+            next.searchParams.set("decomposeBlockSize", decomposeBlockSize.value);
+            next.searchParams.set("decomposeMode", decomposeMode.value);
+            next.searchParams.set("compositeLevels", compositeLevels.value);
+            next.searchParams.set("ditherPattern", ditherPattern.value);
+            window.location.href = next.toString();
+        });
+
+        window.addEventListener("runners-standing-still:live-block", (event) => {
+            const live = event.detail.liveState;
+
+            liveBlockLabel.textContent = live.blockNumber
+                ? `block ${live.blockNumber} / epoch ${live.epoch}`
+                : live.available
+                    ? "local hash fallback"
+                : "live block unavailable";
+        });
+    </script>
+    <script src="./sketch.runners-standing-still.live-noise.js"></script>
+</body>
+</html>
