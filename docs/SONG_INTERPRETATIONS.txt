@@ -1,0 +1,117 @@
+RUNNERS STANDING STILL — READINGS AGAINST THE TRANS AM SONG
+============================================================
+
+The title comes from "Runners Standing Still" by Trans Am. The full
+lyric (Lyrics.txt) is four short stanzas:
+
+    speaking softly
+    toward you
+    two rounded words
+
+    if the air
+    was transparent
+    i'd float away
+
+    sudden songs
+    resemble
+    runners standing still
+
+    if the air
+    was electric
+    we'd float away
+
+Below are a few different ways the script and the artwork can be read
+against it. They aren't mutually exclusive — they're more like
+alternate takes.
+
+
+READING 1: MOTION THAT PRODUCES STILLNESS
+-----------------------------------------
+
+The central image of the song — a runner at full stride who appears
+frozen — is the piece's exact mechanical condition. After the initial
+render completes, the artwork never stops working: a playhead repaints
+one row every animation frame, forever, wrapping around the image like
+a runner circling a track. And yet to a viewer the picture is
+essentially still. All that running accumulates into an image that
+stands.
+
+Trans Am's music does the same thing — motorik repetition, a beat that
+drives relentlessly forward without ever seeming to arrive anywhere.
+The melt algorithm is that idea drawn: each column is a random walk
+that only ever moves, integrated into a composition that only ever
+holds. The runner is the row cursor; the standing still is the canvas.
+
+
+READING 2: TWO ROUNDED WORDS
+----------------------------
+
+"Speaking softly / toward you / two rounded words" — the piece is
+built almost entirely out of soft pairs.
+
+Two noise voices: a base field and a harmonic field, blended by a mix
+knob, never one alone. Two interleaved PRNGs (prngA and prngB),
+alternating draw by draw like two voices trading syllables. Two palette
+families. Two melt accumulators, one deterministic and one live. And
+"rounded" is literal: Perlin noise is the rounded word — its quintic
+fade curve exists precisely to remove corners, to make every gradient
+transition smooth as breath. A love letter to classic Perlin noise is
+a love letter to roundedness itself.
+
+The "speaking softly" is in the alpha. The live loop overdubs at
+roughly half opacity — nothing is ever stated loudly or all at once;
+the image is arrived at by murmuring the same phrase over itself until
+it becomes solid.
+
+
+READING 3: TRANSPARENT AIR, ELECTRIC AIR
+-----------------------------------------
+
+The song offers two conditional atmospheres: transparent air and
+electric air. The script has exactly these two modes.
+
+Transparent air is the fallback state: no network, no chain, just the
+token hash. The piece runs perfectly well in it — deterministic,
+self-contained, sealed like a vacuum. "I'd float away": alone, in
+transparent air, the drift offsets come from the token's own hash
+bytes; the piece floats on nothing but itself.
+
+Electric air is when the RPC connects and Ethereum starts humming
+through the artwork — an invisible ambient charge that permeates the
+piece without ever being depicted. Every four blocks the electricity
+shifts the noise read head, re-crushes the color channels, moves the
+gradient band to a new stripe. "We'd float away": the plural is the
+point. In electric air, the piece is no longer alone — it drifts in
+step with everyone else watching the same chain, a shared atmosphere
+moving all tokens of the collection at once, together.
+
+
+READING 4: SUDDEN SONGS
+-----------------------
+
+"Sudden songs / resemble / runners standing still" — read the epoch
+change as the sudden song. Every four blocks, without warning, the
+piece receives a new set of instructions: new offsets, new masks, a
+gradient that jumps stripes. It's an abrupt event, a song starting
+mid-silence.
+
+And yet nothing visibly lurches. The playhead just keeps circling at
+one row per frame, and the new epoch's character seeps in gradually as
+the loop passes over old material. The sudden song arrives, and the
+runner keeps standing still — change is only ever revealed at the speed
+of the loop. This is also how a looper pedal behaves: you can stomp a
+new setting instantly, but the audience only hears it as the loop comes
+back around.
+
+
+READING 5: THE LOOP AS A LOVE SONG
+-----------------------------------
+
+The gentlest reading: the song is someone speaking softly toward
+another person, and the script is the artist speaking softly toward an
+algorithm. The piece doesn't use Perlin noise as an ingredient; it
+addresses it — implements it by hand in the original 1980s idiom,
+permutation table and quintic fade and all, then spends the whole
+runtime tracing and retracing its contours like a phrase you can't
+stop repeating. A loop is what a love song becomes when you refuse to
+let it end. The runner stands still because it never wants to leave.

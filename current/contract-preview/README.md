@@ -30,7 +30,7 @@ Plain B/W stripes and decomposition-off are intentionally excluded from the acti
 - Completion events are emitted only after the deterministic pass completes.
 - Live epoch drawing starts after deterministic completion.
 - If RPC calls fail or the viewer is offline, `liveState` falls back to deterministic values derived from `renderInput.hash`, so the live loop still has a stable offline state.
-- `liveState.source` is `rpc`, `hash-fallback`, or `unavailable`.
+- `liveState.source` is `rpc` or `hash-fallback`.
 
 ## Cleanup Notes
 

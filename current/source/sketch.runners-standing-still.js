@@ -25,22 +25,7 @@ let liveRpcPreferredIndex = 0;
 let liveRpcFetching = false;
 let liveBlockTimer = null;
 
-function neutralLiveState() {
-    return {
-        available: false,
-        source: "unavailable",
-        blockNumber: null,
-        blockHash: null,
-        epoch: null,
-        baseNoiseXOffset: 0,
-        baseNoiseYOffset: 0,
-        harmonicNoiseXOffset: 0,
-        harmonicNoiseYOffset: 0,
-        harmonicNoiseZOffset: 0,
-    };
-}
-
-let liveState = neutralLiveState();
+let liveState;
 
 function mapUnit(value, min, max) {
     return min + (max - min) * value;
@@ -277,44 +262,12 @@ class NoiseField {
         return a + (b - a) * t;
     }
 
-    grad(hash, x, y) {
-        switch (hash & 3) {
-            case 0:
-                return x + y;
-            case 1:
-                return -x + y;
-            case 2:
-                return x - y;
-            default:
-                return -x - y;
-        }
-    }
-
     grad3(hash, x, y, z) {
         const h = hash & 15;
         const u = h < 8 ? x : y;
         const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
 
         return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-    }
-
-    perlin(x, y) {
-        const xi = Math.floor(x) & 255;
-        const yi = Math.floor(y) & 255;
-        const xf = x - Math.floor(x);
-        const yf = y - Math.floor(y);
-        const u = this.fade(xf);
-        const v = this.fade(yf);
-
-        const aa = this.perm[this.perm[xi] + yi];
-        const ab = this.perm[this.perm[xi] + yi + 1];
-        const ba = this.perm[this.perm[xi + 1] + yi];
-        const bb = this.perm[this.perm[xi + 1] + yi + 1];
-
-        const x1 = this.lerp(this.grad(aa, xf, yf), this.grad(ba, xf - 1, yf), u);
-        const x2 = this.lerp(this.grad(ab, xf, yf - 1), this.grad(bb, xf - 1, yf - 1), u);
-
-        return this.lerp(x1, x2, v) * 0.5 + 0.5;
     }
 
     perlin3(x, y, z) {
@@ -345,56 +298,14 @@ class NoiseField {
         return this.lerp(y1, y2, w) * 0.5 + 0.5;
     }
 
-    sampleBase(type, x, y) {
-        if (type === "domain-warped-perlin") {
-            const warpScale = 0.72;
-            const warpAmount = 0.42;
-            const warpX = this.perlin(x * warpScale + 37.2, y * warpScale - 11.8) - 0.5;
-            const warpY = this.perlin(x * warpScale - 19.6, y * warpScale + 53.4) - 0.5;
-
-            return this.perlin(x + warpX * warpAmount, y + warpY * warpAmount);
-        }
-
-        return this.perlin(x, y);
-    }
-
-    sampleBase3(type, x, y, z) {
-        if (type === "domain-warped-perlin") {
-            const warpScale = 0.72;
-            const warpAmount = 0.42;
-            const warpX = this.perlin3(x * warpScale + 37.2, y * warpScale - 11.8, z + 3.1) - 0.5;
-            const warpY = this.perlin3(x * warpScale - 19.6, y * warpScale + 53.4, z - 7.3) - 0.5;
-
-            return this.perlin3(x + warpX * warpAmount, y + warpY * warpAmount, z);
-        }
-
-        return this.perlin3(x, y, z);
-    }
-
-    fbm(type, x, y, octaves, falloff) {
+    fbm3(x, y, z, octaves, falloff) {
         let sum = 0;
         let amp = 0.5;
         let totalAmp = 0;
         let freq = 1;
 
         for (let i = 0; i < octaves; i++) {
-            sum += this.sampleBase(type, x * freq, y * freq) * amp;
-            totalAmp += amp;
-            amp *= falloff;
-            freq *= 2;
-        }
-
-        return totalAmp === 0 ? 0 : sum / totalAmp;
-    }
-
-    fbm3(type, x, y, z, octaves, falloff) {
-        let sum = 0;
-        let amp = 0.5;
-        let totalAmp = 0;
-        let freq = 1;
-
-        for (let i = 0; i < octaves; i++) {
-            sum += this.sampleBase3(type, x * freq, y * freq, z) * amp;
+            sum += this.perlin3(x * freq, y * freq, z) * amp;
             totalAmp += amp;
             amp *= falloff;
             freq *= 2;
@@ -439,24 +350,65 @@ function previewNumberChoiceParam(name, fallback, choices) {
     return choices.includes(value) ? value : fallback;
 }
 
+// Trait-level settings are sliced from raw hash bits exactly like the
+// on-chain RunnerRenderer._traits, so the SVG thumbnail, metadata
+// attributes, and canvas render agree for any hash. The PRNG draws these
+// settings used to consume are burned (see burnDraws) so every downstream
+// draw stays aligned with previous outputs.
+function deriveHashTraits(hash) {
+    const n = BigInt(/^0x[0-9a-fA-F]{64}$/.test(hash || "") ? hash : PREVIEW_HASH);
+    const slice = (shift, mod) => Number((n >> BigInt(shift)) % BigInt(mod));
+    const hueRoll = slice(32, 1000);
+    const hueValue = slice(42, 1000);
+    const hueBand = [
+        [519, 4, 69],
+        [709, 330, 31],
+        [853, 286, 45],
+        [951, 190, 97],
+        [983, 68, 83],
+        [1000, 150, 41],
+    ].find((band) => hueRoll < band[0]);
+    const sourceRoll = slice(0, 8);
+
+    return {
+        sourceTextureMode: sourceRoll < 4 ? "g4" : sourceRoll < 7 ? "rs" : "gs",
+        paletteMode: slice(8, 2) === 1 ? "split" : "div",
+        ditherPattern: ["line", "b4", "b8"][slice(16, 3)],
+        backgroundMode: ["black", "dark", "light"][slice(24, 3)],
+        paletteBaseHue: hueBand[1] + Math.floor((hueValue * hueBand[2]) / 1000),
+        paletteDivergeSpread: 128 + slice(48, 45),
+        paletteAccentOffset: slice(56, 37) - 18,
+        splitAngle: 18 + slice(64, 37),
+        paletteRelationship: ["nc", "split", "ws", "wa", "st"][slice(72, 5)],
+        splitRole: ["u", "mf", "da", "ta"][slice(80, 4)],
+        splitAccentDirection: slice(88, 2) === 0 ? -1 : 1,
+        backgroundIndex: slice(96, 5),
+        bwTemperature: ["neutral", "warm", "cool"][slice(104, 3)],
+    };
+}
+
 function pickFeatures(random) {
+    const hashTraits = deriveHashTraits(renderInput.hash);
+    // Every random_choice / random_int / random_num / weighted_choice call
+    // consumes exactly one random_dec, so burning that many draws keeps
+    // every remaining draw at its original stream position.
+    const burnDraws = (count) => {
+        for (let i = 0; i < count; i++) random.random_dec();
+    };
     const sourceTextureChoices = [
         "g4",
         "gs",
         "rs",
     ];
+    burnDraws(2);
     const sourceTextureMode = previewChoiceParam(
         "sourceTextureMode",
-        random.weighted_choice([
-            { value: "g4", weight: 4 },
-            { value: "rs", weight: 3 },
-            { value: "gs", weight: 1 },
-        ]),
+        hashTraits.sourceTextureMode,
         sourceTextureChoices
     );
     const gradientBandPaletteMode = previewChoiceParam(
         "paletteFamily",
-        random.random_choice(["div", "split"]),
+        hashTraits.paletteMode,
         ["div", "split"]
     );
     const decomposeMode = previewChoiceParam(
@@ -474,14 +426,15 @@ function pickFeatures(random) {
             "ordered-levels",
         ]
     );
+    burnDraws(2);
     const ditherPattern = previewChoiceParam(
         "ditherPattern",
-        random.random_choice(["b4", "b8", "line"]),
+        hashTraits.ditherPattern,
         ["b4", "b8", "line"]
     );
     const bwTemperature = previewChoiceParam(
         "bwTemperature",
-        random.random_choice(["neutral", "warm", "cool"]),
+        hashTraits.bwTemperature,
         ["neutral", "warm", "cool"]
     );
     const compositeLevels = previewNumberChoiceParam(
@@ -505,16 +458,11 @@ function pickFeatures(random) {
         decomposeBlockChoices
     ));
     const paletteMode = gradientBandPaletteMode;
-    const paletteRelationship = random.random_choice([
-        "nc",
-        "split",
-        "ws",
-        "wa",
-        "st",
-    ]);
-    const splitRole = random.random_choice(["u", "mf", "da", "ta"]);
-    const splitAccentDirection = random.random_choice([-1, 1]);
-    const splitAngle = random.random_num(18, 54);
+    burnDraws(4);
+    const paletteRelationship = hashTraits.paletteRelationship;
+    const splitRole = hashTraits.splitRole;
+    const splitAccentDirection = hashTraits.splitAccentDirection;
+    const splitAngle = hashTraits.splitAngle;
     const textureCornerLayout = random.random_choice(["n", "fx", "fy", "r"]);
     const backgroundModeOverride = previewChoiceParam("backgroundMode", "", [
         "black",
@@ -522,24 +470,22 @@ function pickFeatures(random) {
         "light",
     ]);
     const blackBackgroundOverride = previewOptionalBooleanParam("blackBackground");
-    const backgroundMode = backgroundModeOverride ||
+    let backgroundMode = backgroundModeOverride ||
         (blackBackgroundOverride === true
             ? "black"
             : blackBackgroundOverride === false
                 ? "dark"
-                : random.weighted_choice([
-                    { value: "black", weight: 1 },
-                    { value: "dark", weight: 1 },
-                    { value: "light", weight: 1 },
-                ]));
+                : "");
+    if (!backgroundMode) {
+        burnDraws(1);
+        backgroundMode = hashTraits.backgroundMode;
+    }
     const meltStrength = random.random_num(4, 7);
     const verticalStretch = random.random_num(0.3, 0.8);
     const targetDrift = random.random_dec() < 0.357
         ? random.random_num(-0.16, -0.06)
         : random.random_num(0.06, 0.24);
-    const neutralNoiseBias = 0.5 + verticalStretch / meltStrength;
     const noiseBias = 0.5 + (verticalStretch - targetDrift) / meltStrength;
-    const effectiveSlope = verticalStretch + meltStrength * (0.5 - noiseBias);
     const harmonicAmount = random.random_dec() < 0.08
         ? random.random_num(0, 0.08)
         : random.random_num(0.16, 0.4);
@@ -547,24 +493,18 @@ function pickFeatures(random) {
         ? random.random_num(0.0009, 0.00135)
         : random.random_num(0.00135, 0.003);
 
+    burnDraws(10);
+
     return {
-        backgroundIndex: random.random_int(0, 4),
+        backgroundIndex: hashTraits.backgroundIndex,
         paletteMode,
         backgroundMode,
         sourceTextureMode,
-        paletteBaseHue: random.weighted_choice([
-            { value: random.random_num(4, 72), weight: 4.5 },
-            { value: random.random_num(330, 360), weight: 1.65 },
-            { value: random.random_num(286, 330), weight: 1.25 },
-            { value: random.random_num(190, 286), weight: 0.85 },
-            { value: random.random_num(68, 150), weight: 0.28 },
-            { value: random.random_num(150, 190), weight: 0.15 },
-        ]),
-        paletteAccentOffset: random.random_num(-18, 18),
-        paletteDivergeSpread: random.random_num(128, 172),
+        paletteBaseHue: hashTraits.paletteBaseHue,
+        paletteAccentOffset: hashTraits.paletteAccentOffset,
+        paletteDivergeSpread: hashTraits.paletteDivergeSpread,
         backgroundHueOffset: random.random_choice([120, 180, 240]),
         paletteRelationship,
-        splitHueFamily: "any",
         splitAccentStrength: 1,
         splitAccentDirection,
         splitAngle,
@@ -586,10 +526,7 @@ function pickFeatures(random) {
         harmonicAmount,
         harmonicScale: random.random_num(1, 3.5),
         noiseBias,
-        neutralNoiseBias,
-        noiseBiasDelta: noiseBias - neutralNoiseBias,
         targetDrift,
-        effectiveSlope,
         meltStrength,
         tilt: random.random_num(0.08, 0.3),
         verticalStretch,
@@ -628,7 +565,6 @@ globalThis.$features = {
     dir: features.paletteMode === "split" && features.splitAccentDirection < 0 ? "ccw" : "cw",
     layout: features.textureCornerLayout,
 };
-
 
 globalThis.__textureMelt = {
     initialized: false,
@@ -672,13 +608,11 @@ function updateLiveRuntime() {
 }
 
 function sampleLiveNoiseAt(x, y, state) {
-    const noiseType = features.noiseType;
     const xNoise = x * features.noiseStepX;
     const yNoise = y * features.noiseStepY;
     const noiseOctaves = Math.max(1, Math.floor(features.noiseOctaves));
     const noiseFalloff = features.noiseFalloff;
     const baseNoise = noise.fbm3(
-        noiseType,
         xNoise + state.baseNoiseXOffset,
         yNoise + state.baseNoiseYOffset,
         features.noiseZ,
@@ -686,7 +620,6 @@ function sampleLiveNoiseAt(x, y, state) {
         noiseFalloff
     );
     const harmonicNoise = noise.fbm3(
-        noiseType,
         xNoise * features.harmonicScale + state.harmonicNoiseXOffset,
         yNoise * features.harmonicScale + state.harmonicNoiseYOffset,
         features.noiseZ + 9.73 + state.harmonicNoiseZOffset,
@@ -864,7 +797,7 @@ function drawLiveSourceRow(ctx, sourceY, state) {
 }
 
 function drawLiveContinuousRows() {
-    if (!activeCtx || !completed || !liveState.available) {
+    if (!activeCtx || !completed) {
         return;
     }
 
@@ -964,35 +897,6 @@ function hueDamping(hue) {
     return 1 - damping;
 }
 
-function hueFromRanges(seedHue, ranges) {
-    const unit = wrapHue(seedHue) / 360;
-    const range = ranges[Math.floor(unit * ranges.length) % ranges.length];
-    const local = (unit * ranges.length) % 1;
-    return mix(range[0], range[1], local);
-}
-
-function guidedSplitHue(seedHue) {
-    const family = features.splitHueFamily;
-
-    if (family === "warm") {
-        return hueFromRanges(seedHue, [[8, 62], [330, 360], [0, 24]]);
-    }
-
-    if (family === "earth") {
-        return hueFromRanges(seedHue, [[20, 48], [58, 96], [338, 18]]);
-    }
-
-    if (family === "cool") {
-        return hueFromRanges(seedHue, [[170, 215], [220, 270], [275, 315]]);
-    }
-
-    if (family === "acid") {
-        return hueFromRanges(seedHue, [[68, 105], [112, 154], [292, 326]]);
-    }
-
-    return seedHue;
-}
-
 function warmAnalogHue(mainHue, angle) {
     const forward = mainHue + angle;
     const backward = mainHue - angle;
@@ -1033,13 +937,10 @@ function linearToSrgb(value) {
     return 1.055 * Math.pow(value, 1 / 2.4) - 0.055;
 }
 
-function oklchToRgbRaw(l, c, h) {
-    const radians = wrapHue(h) * Math.PI / 180;
-    const a = Math.cos(radians) * c;
-    const b = Math.sin(radians) * c;
-    const lPrime = l + 0.3963377774 * a + 0.2158037573 * b;
-    const mPrime = l - 0.1055613458 * a - 0.0638541728 * b;
-    const sPrime = l - 0.0894841775 * a - 1.2914855480 * b;
+function oklabToRgbRaw(lab) {
+    const lPrime = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
+    const mPrime = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
+    const sPrime = lab.l - 0.0894841775 * lab.a - 1.2914855480 * lab.b;
     const l3 = lPrime * lPrime * lPrime;
     const m3 = mPrime * mPrime * mPrime;
     const s3 = sPrime * sPrime * sPrime;
@@ -1049,6 +950,12 @@ function oklchToRgbRaw(l, c, h) {
         g: linearToSrgb(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3),
         b: linearToSrgb(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3),
     };
+}
+
+function oklchToRgbRaw(l, c, h) {
+    const radians = wrapHue(h) * Math.PI / 180;
+
+    return oklabToRgbRaw({ l, a: Math.cos(radians) * c, b: Math.sin(radians) * c });
 }
 
 function oklchToHex(l, c, h) {
@@ -1095,34 +1002,19 @@ function hexToOklab(hex) {
 }
 
 function oklabToHex(lab) {
-    const lPrime = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
-    const mPrime = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
-    const sPrime = lab.l - 0.0894841775 * lab.a - 1.2914855480 * lab.b;
-    const l3 = lPrime * lPrime * lPrime;
-    const m3 = mPrime * mPrime * mPrime;
-    const s3 = sPrime * sPrime * sPrime;
-    const rgb = {
-        r: linearToSrgb(+4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3),
-        g: linearToSrgb(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3),
-        b: linearToSrgb(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3),
-    };
+    const rgb = oklabToRgbRaw(lab);
     const toHex = (value) => Math.round(clamp01(value) * 255).toString(16).padStart(2, "0");
 
     return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
 }
 
 function oklabToRgbBytes(lab) {
-    const lPrime = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
-    const mPrime = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
-    const sPrime = lab.l - 0.0894841775 * lab.a - 1.2914855480 * lab.b;
-    const l3 = lPrime * lPrime * lPrime;
-    const m3 = mPrime * mPrime * mPrime;
-    const s3 = sPrime * sPrime * sPrime;
+    const rgb = oklabToRgbRaw(lab);
 
     return {
-        r: Math.round(clamp01(linearToSrgb(+4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3)) * 255),
-        g: Math.round(clamp01(linearToSrgb(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3)) * 255),
-        b: Math.round(clamp01(linearToSrgb(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3)) * 255),
+        r: Math.round(clamp01(rgb.r) * 255),
+        g: Math.round(clamp01(rgb.g) * 255),
+        b: Math.round(clamp01(rgb.b) * 255),
     };
 }
 
@@ -1217,7 +1109,7 @@ function generatedPalette(modeOverride = features.paletteMode) {
     const h = features.paletteBaseHue;
 
     if (mode === "split") {
-        const mainHue = guidedSplitHue(h);
+        const mainHue = h;
         const accentStrength = features.splitAccentStrength;
         const role = features.splitRole;
         const accentHue = relationshipAccentHue(mainHue);
@@ -1398,9 +1290,6 @@ function createTexture() {
 
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const backgroundPalette = generatedPalette(features.gradientBandPaletteMode);
-    const palette = features.sourceTextureMode === "g4"
-        ? backgroundPalette
-        : generatedPalette();
     const bwColors = bwSourceColors(backgroundPalette);
 
     if (features.sourceTextureMode === "rs") {
@@ -1464,7 +1353,7 @@ function createTexture() {
     } else if (features.sourceTextureMode === "gs") {
         fillFourCornerOklabTexture(ctx, [bwColors.dark, bwColors.light, bwColors.light, bwColors.dark]);
     } else {
-        fillFourCornerOklabTexture(ctx, palette.colors);
+        fillFourCornerOklabTexture(ctx, backgroundPalette.colors);
     }
 
     sourcePixels = ctx.getImageData(0, 0, gw, gh).data;
@@ -1473,7 +1362,6 @@ function createTexture() {
 }
 
 function measureNoiseStats() {
-    const noiseType = features.noiseType;
     const noiseStepX = features.noiseStepX;
     const noiseStepY = features.noiseStepY;
     const noiseZ = features.noiseZ;
@@ -1495,7 +1383,6 @@ function measureNoiseStats() {
         for (let y = 0; y < renderHeight; y += 32) {
             const yNoise = y * noiseStepY;
             const base = noise.fbm3(
-                noiseType,
                 xNoise + baseNoiseXOffset,
                 yNoise + baseNoiseYOffset,
                 noiseZ,
@@ -1503,7 +1390,6 @@ function measureNoiseStats() {
                 noiseFalloff
             );
             const harmonic = noise.fbm3(
-                noiseType,
                 xNoise * harmonicScale + harmonicNoiseXOffset,
                 yNoise * harmonicScale + harmonicNoiseYOffset,
                 noiseZ + 9.73 + harmonicNoiseZOffset,
@@ -1573,7 +1459,6 @@ let draw = ({ ctx, canvas, deltaTime }) => {
         renderInnerBackground(ctx);
     }
 
-    const noiseType = features.noiseType;
     const noiseStepX = features.noiseStepX;
     const noiseStepY = features.noiseStepY;
     const noiseZ = features.noiseZ;
@@ -1614,7 +1499,6 @@ let draw = ({ ctx, canvas, deltaTime }) => {
             const xOffset = x * tilt;
             const xPixelOffset = x * 4;
             const baseNoise = noise.fbm3(
-                noiseType,
                 xNoise + baseNoiseXOffset,
                 yNoise + baseNoiseYOffset,
                 noiseZ,
@@ -1622,7 +1506,6 @@ let draw = ({ ctx, canvas, deltaTime }) => {
                 noiseFalloff
             );
             const harmonicNoise = noise.fbm3(
-                noiseType,
                 xNoise * harmonicScale + harmonicNoiseXOffset,
                 yNoise * harmonicScale + harmonicNoiseYOffset,
                 noiseZ + 9.73 + harmonicNoiseZOffset,

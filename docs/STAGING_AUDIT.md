@@ -54,7 +54,6 @@ These are currently chosen in `pickFeatures()`.
 | `paletteAccentOffset` | `-18..18` |
 | `paletteDivergeSpread` | `128..172` |
 | `backgroundHueOffset` | one of `120`, `180`, `240` |
-| `splitHueFamily` | fixed to `any` |
 | `splitAccentStrength` | fixed to `0.25` |
 | `splitRole` | fixed to `undertone` |
 | `noiseSeed` | `1..999999999` |
@@ -84,10 +83,9 @@ These ranges exist in `props` for local auditioning. They are broader than the s
 | --- | --- |
 | `paletteMode` | `fixed`, `split-complement`, `diverging` |
 | `backgroundMode` | `palette-dark`, `palette-light`, `palette-companion`, `warm-paper`, `cool-paper`, `painterly-paper` |
-| `splitHueFamily` | `any`, `warm`, `earth`, `cool`, `acid` |
 | `splitAccentStrength` | `0..1` |
 | `splitRole` | `undertone`, `middle-flash`, `deep-accent`, `two-accent` |
-| `noiseType` | `perlin`, `domain-warped-perlin` |
+| `noiseType` | `perlin` |
 | `noiseStepX` | `0.0001..0.004` |
 | `noiseStepY` | `0.0001..0.004` |
 | `noiseZ` | `0..20` |
@@ -137,7 +135,6 @@ Current user-notated staging decisions:
 | `paletteMode` | `diverging`, `split-complement` |
 | `backgroundMode` | weighted: `palette-dark` 2.25, `palette-light` 1, `warm-paper` 1, `cool-paper` 1 |
 | `matteColor` | fixed white for now |
-| `splitHueFamily` | fixed `any` |
 | `splitAccentStrength` | fixed `1` |
 | `splitRole` | `undertone`, `middle-flash`, `deep-accent`, `two-accent` |
 | option weighting | palette/source/split options equal for now; background mode is weighted toward dark |
@@ -170,7 +167,6 @@ Good candidates to freeze:
 
 Needs a final call:
 
-- Whether `domain-warped-perlin` survives as a rare trait or stays out.
 - Noise bias range and named trait categories.
 - Final palette hue/accent/divergence/offset settings.
 

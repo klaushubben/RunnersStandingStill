@@ -170,15 +170,7 @@ noiseOctaves: 2
 noiseFalloff: 0.05
 ```
 
-Noise bias is intentionally derived:
-
-```js
-neutralNoiseBias = 0.5 + verticalStretch / meltStrength;
-noiseBias = 0.5 + (verticalStretch - targetDrift) / meltStrength;
-effectiveSlope = verticalStretch + meltStrength * (0.5 - noiseBias);
-```
-
-`effectiveSlope` should equal `targetDrift`. This is used to avoid compositions where the melt sits overwhelmingly above or below the tilted centerline.
+Noise bias is intentionally derived from vertical stretch and melt strength to control the melt's vertical placement relative to the tilted centerline, avoiding compositions where the melt sits overwhelmingly above or below.
 
 ## Palette System
 
@@ -207,7 +199,6 @@ splitAccentDirection: -1 | 1
 splitAngle: 18..54
 textureCornerLayout: normal | flip-x | flip-y | rotate
 splitAccentStrength: 1
-splitHueFamily: any
 ```
 
 Base hue is weighted toward warm/magenta regions but still permits cooler ranges:

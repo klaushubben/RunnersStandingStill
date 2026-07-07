@@ -65,10 +65,10 @@ Status key:
 ## 6. Testnet Staging
 
 - [x] Add Foundry tests that load the final minified renderer artifact
-- [x] Confirm final renderer artifact is `23,037` bytes
+- [x] Confirm final renderer artifact is `21,209` bytes
 - [x] Confirm final renderer uses `1` SSTORE2 chunk
 - [x] Confirm final `tokenURI` gas is below conservative call caps
-- [ ] Run Anvil deploy/mint/decode roundtrip for current artifact
+- [x] Run Anvil deploy/mint/decode roundtrip for current artifact
 - [ ] Choose first public testnet: Sepolia or Holesky
 - [ ] Choose funded deployer wallet for testnet
 - [ ] Deploy renderer and token to testnet
@@ -101,5 +101,5 @@ Status key:
 - `window.tokenData` remains a compatibility alias only
 - No external JS/image dependencies
 - Live RPC behavior remains embedded in the on-chain renderer
-- Current minified renderer script is `23,037` bytes and fits in one SSTORE2 chunk
-- Current measured `tokenURI` gas for final artifact is `4,817,392`
+- Current minified renderer script is `21,209` bytes and fits in one SSTORE2 chunk
+- Current measured `tokenURI` gas for final artifact is `5,211,806` (cast estimate, local Anvil)

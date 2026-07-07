@@ -1,0 +1,183 @@
+RUNNERS STANDING STILL — TECHNICAL OVERVIEW
+============================================
+
+Source: current/source/sketch.runners-standing-still.js
+
+The piece was conceived as a love letter to classic Perlin noise, read
+through the lens of a sound looping device. A deterministic "recorded
+phrase" is rendered once from the token hash; after that, a live loop
+passes over the same material forever, one row per frame, while fetched
+Ethereum block data quietly re-tunes the machine every few blocks. The
+sections below walk through the three systems that carry that idea:
+the layered noise, the procedural palette, and the block-data plumbing.
+
+
+1. LAYERED USE OF PERLIN NOISE
+------------------------------
+
+The noise engine is a from-scratch implementation of Ken Perlin's
+improved noise, not a library call. The NoiseField class builds a
+256-entry permutation table shuffled by a seeded linear congruential
+generator (so the field itself is reproducible from the token hash),
+and implements 3D noise (perlin3) with the classic quintic fade curve
+6t^5 - 15t^4 + 10t^3 and hashed gradient directions. This is
+deliberately the textbook algorithm — the love letter is written in
+the original handwriting.
+
+On top of that raw field, the noise is layered three ways:
+
+a) Fractal layering (fbm3). Octaves are summed at doubling
+   frequencies with a per-octave amplitude falloff, then normalized by
+   total amplitude. The piece runs 2 octaves with a very steep falloff
+   (0.05), so the second octave is barely audible — a fundamental with
+   a faint overtone rather than a full harmonic stack.
+
+b) Dual-voice blending. Every sample point is actually two independent
+   reads of the field: a "base" voice at the working frequency, and a
+   "harmonic" voice at 1x–3.5x that frequency (harmonicScale), offset
+   in the z dimension by +9.73 so the two voices are decorrelated. The
+   two are combined with a simple linear mix whose blend knob is
+   harmonicAmount (usually 0.16–0.4, occasionally near zero). In looper
+   terms: an oscillator and its overtone on a mix fader.
+
+c) Statistical centering (measureNoiseStats). Before drawing, the
+   blended field is sampled on a 32px grid to measure its actual mean,
+   and every subsequent sample is re-centered around 0.5 by subtracting
+   that mean. This is DC-offset removal, exactly as you would do to an
+   audio signal before amplifying it: without it, hash-specific bias in
+   the field would make the whole image drift up or down the canvas.
+
+The noise is not used to color pixels directly. Instead it drives a
+melt integrator: for each column, the centered noise value (minus a
+per-token noiseBias) is multiplied by meltStrength to give the height h
+of a thin rectangle sampled from the source texture, and h is then
+accumulated into a running per-column offset (deterministicColumnMelt /
+liveColumnMelt). The image is therefore the integral of the noise field
+over y — a random walk per column — which is why the texture appears to
+melt and smear downward. noiseBias, targetDrift, verticalStretch and
+tilt shape the overall slope of that walk, so the composition leans and
+drifts in a controlled way while the fine structure stays pure Perlin.
+
+
+2. PROCEDURAL COLOR PALETTE CONSTRUCTION
+----------------------------------------
+
+All color math happens in OKLab / OKLCH, with sRGB only as the final
+output encoding. The pipeline includes hand-rolled conversions in both
+directions, and two safety mechanisms:
+
+- Gamut mapping by chroma reduction: oklchToHex repeatedly multiplies
+  chroma by 0.94 until the resulting RGB lands inside [0,1], so
+  requested colors desaturate gracefully instead of clipping.
+
+- Perceptual hue damping: hueDamping attenuates chroma near green
+  (135 deg) and purple (292 deg), the two hue regions where saturated
+  OKLCH colors most easily turn garish on screen.
+
+The palette parameters are not drawn from the PRNG stream — they are
+sliced directly from bit ranges of the token hash (deriveHashTraits),
+mirroring an on-chain renderer so that SVG thumbnail, metadata, and
+canvas agree for any hash. The base hue comes from a weighted band
+table (some hue neighborhoods are far more likely than others), and
+further slices pick the palette family, spread, accent offset, split
+angle, and background behavior.
+
+Two palette families are built procedurally from those numbers:
+
+- "div" (diverging): five stops that fan out from the base hue by
+  +/- half of paletteDivergeSpread, with a lightness arc that rises
+  from dark (L=0.36) through a pale center (L=0.82) and back down —
+  a symmetric ridge, dark-saturated at the ends and airy in the middle.
+
+- "split": a four-step monochromatic ramp on a "main" hue (light to
+  dark, with small hue rotation per step so the ramp isn't sterile),
+  plus one accent hue derived from a color-harmony relationship:
+  near-complement, wide split, warm analog, or split-tertiary
+  (relationshipAccentHue). A separate splitRole trait decides where the
+  accent sits in the five-color sequence — pale highlight, mid-frame
+  voice, deep anchor, or two accents bracketing the ramp.
+
+A global constant, PALETTE_CHROMA_PUSH = 1.32, uniformly overdrives
+chroma before gamut mapping pulls it back — asking for more color than
+the screen can give and letting the mapper find the loudest legal value.
+
+Everything downstream is derived rather than picked: dark and light
+background colors are re-synthesized in OKLCH from the palette's own
+swatches (paletteDarkBackground / paletteLightBackground), the "black
+and white" stripe colors are tinted by the background's hue with a
+warm/neutral/cool temperature trait (bwSourceColors), gradients are
+interpolated in OKLab with 8 sub-stops per segment (addOklabStops) so
+they never pass through muddy sRGB midpoints, and the four-corner
+source texture is a full per-pixel bilinear blend in OKLab space
+(fillFourCornerOklabTexture).
+
+
+3. FETCHED BLOCK DATA AS DRAWING PARAMETERS
+-------------------------------------------
+
+After the deterministic render completes, the piece opens a connection
+to Ethereum mainnet: every 12 seconds it calls eth_getBlockByNumber
+("latest") against a rotating list of five public RPC endpoints, with a
+5-second timeout and automatic failover (the last endpoint that worked
+becomes the preferred one). Block numbers are grouped into epochs of 4
+blocks (~48 seconds), and only an epoch change mutates state — the
+piece breathes on roughly the timescale of a song section, not per
+block.
+
+The block hash is treated as a control-voltage source. Individual bytes
+are mapped onto drawing parameters:
+
+- Bytes 0–4 become noise domain offsets: the base field's x/y read
+  position shifts by up to +/-0.12, the harmonic field's by up to
+  +/-0.75 in x/y and +/-1.5 in z. The block literally moves the read
+  head over the Perlin field — the loop replays, but the tape has been
+  nudged.
+
+- Bytes 5–7 (plus the epoch number) select per-channel bit masks
+  (0xf0, 0xe0, 0xc0, ...) used by the "mask" decompose modes, which
+  AND the source color channels before optional ordered dithering.
+  Each epoch bit-crushes the colors differently — a changing amount of
+  quantization grit, like swapping the bit depth on a sampler.
+
+- Bytes 29–30 (plus the epoch) choose which white stripe of the "rs"
+  striped source texture is replaced by a full OKLab palette gradient.
+  On each new epoch the texture is rebuilt and the gradient band jumps
+  to a different stripe, with a guard so it never lands on the same
+  stripe twice in a row.
+
+When an epoch changes, noise statistics are re-measured so the DC
+centering stays correct for the shifted field, and the live loop keeps
+scanning: drawLiveContinuousRows repaints one source row per animation
+frame, wrapping the row cursor modulo the image height and resetting
+the column-melt accumulator at each wraparound. This is the looping
+device made explicit — a playhead endlessly circling the same material,
+overdubbing semi-transparent passes (alpha 120–200) whose character
+shifts each time the chain hands it a new epoch.
+
+The design degrades gracefully. If every RPC endpoint fails, or before
+the first fetch resolves, the same five offsets are derived from bytes
+24–28 of the token hash instead (liveStateFromHash), so the piece is
+fully deterministic and self-contained offline; the chain is an
+enrichment, not a dependency. A visibility check pauses polling in
+hidden tabs, and the live state (source, block number, epoch) is
+exposed on globalThis.__textureMelt and broadcast via
+"runners-standing-still:live-block" CustomEvents for viewers and
+tooling.
+
+
+THE LOOPER, SUMMARIZED
+----------------------
+
+Record: the token hash seeds a paired sfc32 PRNG and the hash-bit
+traits, and a single deterministic pass renders the phrase — noise
+integrated into melt, colored by the OKLab palette.
+
+Loop: once complete, a playhead re-scans the image row by row, forever,
+at one row per frame.
+
+Overdub: each pass lays down translucent color over the last, its
+accumulator resetting only when the loop wraps.
+
+Tweak the knobs: every four blocks, Ethereum reaches in and shifts the
+noise read position, the channel masks, and the gradient stripe — the
+performer's hand on the pedal while the loop keeps running.
